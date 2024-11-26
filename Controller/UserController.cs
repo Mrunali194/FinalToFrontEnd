@@ -26,11 +26,9 @@ public class UserController : ControllerBase
 
         try
         {
-            var result = await userDetails.AddUserAsync(userDto);
-            return Ok(new
-            {
-                message = "User registered successfully"
-            });
+            var result =  userDetails.AddUser(userDto);
+            return Ok(new { Message = result });
+          
         }
         catch (Exception ex)
         {
@@ -38,7 +36,6 @@ public class UserController : ControllerBase
         }
     }
 
-    
     [HttpPost("login")]
     public async Task<IActionResult> LoginUser([FromBody] UserLoginDto userLoginDto)
     {
@@ -54,14 +51,13 @@ public class UserController : ControllerBase
 
         try
         {
-            
             var token = await userDetails.LoginUserAsync(userLoginDto);
             
             return Ok(new { Token = token });
         }
-        catch (UnauthorizedAccessException )
+        catch (UnauthorizedAccessException ex)
         {
-            return Unauthorized();
+            return Unauthorized(ex.Message);
         }
         
     }

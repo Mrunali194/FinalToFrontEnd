@@ -36,9 +36,6 @@ namespace Demo.Migrations
                     b.Property<int>("DrugId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("OrderId")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -50,8 +47,6 @@ namespace Demo.Migrations
                     b.HasIndex("CartId");
 
                     b.HasIndex("DrugId");
-
-                    b.HasIndex("OrderId");
 
                     b.ToTable("CartItems", (string)null);
                 });
@@ -118,6 +113,9 @@ namespace Demo.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderId"));
 
+                    b.Property<DateTime?>("DeliveryDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
@@ -125,6 +123,9 @@ namespace Demo.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("OrderStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddress")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -148,7 +149,7 @@ namespace Demo.Migrations
                     b.Property<int>("AmountSold")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrderId")
+                    b.Property<int>("DrugId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("SaleAmount")
@@ -156,7 +157,7 @@ namespace Demo.Migrations
 
                     b.HasKey("ReportId");
 
-                    b.HasIndex("OrderId");
+                    b.HasIndex("DrugId");
 
                     b.ToTable("SalesReports", (string)null);
                 });
@@ -200,7 +201,7 @@ namespace Demo.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("TransactionDate")
+                    b.Property<DateTime?>("TransactionDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("TransactionStatus")
@@ -289,23 +290,16 @@ namespace Demo.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Demo.Model.OrderDetails", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId");
-
                     b.Navigation("Cart");
 
                     b.Navigation("Drug");
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Demo.Model.DrugDetails", b =>
                 {
                     b.HasOne("Demo.Model.SupplierDetails", "Supplier")
                         .WithMany("Drugs")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("SupplierId");
 
                     b.Navigation("Supplier");
                 });
@@ -324,7 +318,7 @@ namespace Demo.Migrations
             modelBuilder.Entity("Demo.Model.OrderDetails", b =>
                 {
                     b.HasOne("Demo.Model.UserDetails", "User")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -334,13 +328,13 @@ namespace Demo.Migrations
 
             modelBuilder.Entity("Demo.Model.SalesReport", b =>
                 {
-                    b.HasOne("Demo.Model.OrderDetails", "Order")
+                    b.HasOne("Demo.Model.DrugDetails", "Drug")
                         .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("DrugId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Order");
+                    b.Navigation("Drug");
                 });
 
             modelBuilder.Entity("Demo.Model.TransactionDetails", b =>
@@ -391,11 +385,6 @@ namespace Demo.Migrations
             modelBuilder.Entity("Demo.Model.SupplierDetails", b =>
                 {
                     b.Navigation("Drugs");
-                });
-
-            modelBuilder.Entity("Demo.Model.UserDetails", b =>
-                {
-                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

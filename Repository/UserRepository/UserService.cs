@@ -24,8 +24,7 @@ namespace Demo.Repository
             configuration = _configuration;
         }
 
-        // Register a new user or admin
-        public async Task<UserDetailsDto> AddUserAsync(UserDetailsDto userDto)
+        public async Task<string> AddUser(UserDetailsDto userDto)
         {
 
             if (await context.UserDetails.AnyAsync(u => u.EmailId == userDto.EmailId))
@@ -47,26 +46,19 @@ namespace Demo.Repository
                 UserType = userDto.UserType ?? "Doctor" 
             };
 
-            
             context.UserDetails.Add(user);
 
             await context.SaveChangesAsync();
 
-            return new UserDetailsDto
-            {
-                UserName = user.UserName,
-                EmailId = user.EmailId,
-                Contact = user.Contact,
-                UserType = user.UserType
-            };
+            return "User registered successfully";
         }
 
         
         public async Task<string> LoginUserAsync(UserLoginDto userLoginDto)
         {
-             if (userLoginDto == null)
+            if (userLoginDto == null)
             {
-                throw new ArgumentNullException(nameof(userLoginDto), "User login data is missing.");
+                throw new ArgumentNullException("User login data is missing.");
             }
             
             var user = await context.UserDetails
@@ -74,14 +66,14 @@ namespace Demo.Repository
 
             if (user == null)
             {
-                throw new UnauthorizedAccessException("Invalid email/mobile number or password.");
-            }
-            if (user.Password!=userLoginDto.Password)
-            {
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedAccessException("Invalid Credentials");
             }
 
-            
+            if (user.Password != userLoginDto.Password)
+            {
+                throw new UnauthorizedAccessException("Invalid Credentials");
+            }
+                
             var token = GenerateJwtToken(user);
             return token;
         }

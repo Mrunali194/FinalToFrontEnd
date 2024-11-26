@@ -7,7 +7,7 @@ public class TransactionDetails
     public string? TransactionType{get;set;}
     public string? TransactionStatus{get;set;}
     public decimal AmountPaid{get;set;}
-    public DateTime TransactionDate{get;set;}
+    public DateTime? TransactionDate{get;set;}
 
     public int OrderId{get;set;}
     public OrderDetails? Order{get;set;}

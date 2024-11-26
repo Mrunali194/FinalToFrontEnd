@@ -15,19 +15,14 @@ public class DrugService : IDrugRepository
         }
 
     
-    public async Task<DrugDetailsDto> AddDrugDetails(DrugDetailsDto drugDto)
+    public async Task<string> AddDrugDetails(DrugDetailsDto drugDto)
     {
-       if (drugDto == null)
-        {
-            throw new ArgumentNullException(nameof(drugDto));
-        }
-         var supplier = await context.SupplierDetails.FindAsync(drugDto.SupplierId); 
+        // var supplier = await context.SupplierDetails.FindAsync(drugDto.SupplierId); 
 
-        if (supplier == null)
-        {
-            throw new Exception("Supplier not found.");
-        }
-
+        // if (supplier == null)
+        // {
+        //     throw new Exception("Supplier not found.");
+        // }
         //Mapping
         var drug = new DrugDetails
         {
@@ -35,13 +30,12 @@ public class DrugService : IDrugRepository
                 Quantity = drugDto.Quantity,
                 ExpiryDate = drugDto.ExpiryDate,
                 Price = drugDto.Price,
-                SupplierId=drugDto.SupplierId
+                // /SupplierId=drugDto.SupplierId
         };
-
         context.DrugDetails.Add(drug);
         await context.SaveChangesAsync();
 
-        return drugDto;
+        return "Drug Added Successfully";
     }
     public async Task<List<DrugDetails>> GetDrugsToUpdateAsync()
     {
@@ -78,13 +72,11 @@ public class DrugService : IDrugRepository
     {
             return context.DrugDetails;
     }
-
     
     public async Task<DrugDetails> GetDrugByIdAsync(int drugId)
     {
         return await context.DrugDetails.FirstOrDefaultAsync(d => d.DrugId == drugId);
     }
-
 
 }
     

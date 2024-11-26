@@ -42,7 +42,7 @@ public class SupplierService:ISupplierRepository
 
     public async Task<List<SupplierDetails>> GetAllSuppliers()
     {
-        return await context.SupplierDetails.Include(s => s.Drugs).ToListAsync();
+        return await context.SupplierDetails.ToListAsync();
     }
 
     public async Task<SupplierDetails> GetSupplierByIdAsync(int supplierId)
@@ -52,13 +52,13 @@ public class SupplierService:ISupplierRepository
 
     public async Task DeleteSupplierAsync(SupplierDetails supplier)
     {
-            var drugs = await context.DrugDetails.Where(d => d.SupplierId == supplier.SupplierId).ToListAsync();
+            var drugs = await context.SupplierDetails.Where(s => s.SupplierId == supplier.SupplierId).ToListAsync();
 
-            // Set the SupplierId of related drugs to null
-            foreach (var drug in drugs)
-            {
-                drug.SupplierId = null;
-            }
+            // // Set the SupplierId of related drugs to null
+            // foreach (var drug in drugs)
+            // {
+            //     drug.SupplierId = null;
+            // }
             context.SupplierDetails.Remove(supplier);
             await context.SaveChangesAsync();
     }

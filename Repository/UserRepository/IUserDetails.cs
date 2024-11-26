@@ -6,7 +6,7 @@ namespace Demo.Repository;
 public interface IUserDetails
 {
 
-    Task<UserDetailsDto> AddUserAsync(UserDetailsDto userDto);
+    Task<string> AddUser(UserDetailsDto userDto);
     Task<string> LoginUserAsync(UserLoginDto userLoginDto);
 
 

@@ -1,15 +1,11 @@
-using Demo.Model;
 using Demo.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Demo.Database;
-using Demo.Dtos;
 using System.Text;
 using Microsoft.OpenApi.Models;
-using System.Net;
-using Demo.Repository;
-using System.Net.Mail;  // Add using statement for SmtpClient
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +28,12 @@ builder.Services.AddScoped<ISupplierRepository, SupplierService>();
 builder.Services.AddScoped<IAddTocart, AddTocart>();
 builder.Services.AddScoped<IOrderRepository, OrderService>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<ISalesReportRepository,SalesReportService>();
 
-   
+
+
+
+
 // Add JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

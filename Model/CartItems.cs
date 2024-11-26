@@ -14,8 +14,8 @@ public class CartItem
     public int Quantity { get; set; }
     public decimal Price { get; set; }
 
-    public int? OrderId { get; set; }  // Nullable, as the item might not have been ordered yet
+    // public int? OrderId { get; set; }  // Nullable, as the item might not have been ordered yet
     
-    // Navigation property to the related Order
-    public OrderDetails? Order { get; set; } 
+    // // Navigation property to the related Order
+    // public OrderDetails? Order { get; set; } 
 }

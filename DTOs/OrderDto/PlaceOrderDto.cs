@@ -2,7 +2,7 @@ namespace Demo.Dtos
 {
     public class PlaceOrderDto
     {
-        public int UserId { get; set; }
-        
+        public string? ShippingAddress { get; set; }  
+        public string? TransactionType{get;set;}
     }
 }

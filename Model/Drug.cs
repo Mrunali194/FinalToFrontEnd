@@ -11,9 +11,8 @@ public class DrugDetails {
     public decimal Price {get; set;}
 
    
-    public int? SupplierId {get; set;}
+   public int? SupplierId {get; set;}
 
-    [JsonIgnore]
     public SupplierDetails? Supplier { get; set; }//one inventory has only one supplier
 
     [JsonIgnore]

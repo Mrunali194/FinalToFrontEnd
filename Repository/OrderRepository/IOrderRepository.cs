@@ -7,8 +7,13 @@ namespace Demo.Repository;
 
 public interface IOrderRepository
 {
-     Task<List<OrderWithDrugsDto>> GetAllOrdersWithDrugs();
-     Task<string> PlaceOrder(ClaimsIdentity user);
-     Task<string> VerifyOrder(int orderId);
+     Task<List<AllOrderDetails>> GetAllOrdersWithDrugs();
+     
+     Task<string> PlaceOrder(int userId,PlaceOrderDto placeOrderDto);
+     Task<List<OrderCancelDto>> GetUserOrders(int userId);
+
+     Task<string> CancelCompletedOrder(int orderId, int userid);
+     Task<string> ApproveOrder(int orderId);
+     
     
 }

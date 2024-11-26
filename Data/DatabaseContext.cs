@@ -22,17 +22,23 @@ public class DatabaseContext : DbContext {
 
             base.OnModelCreating(modelBuilder);
 
-        // Configure one-to-many relationship (one supplier can have many drugs)
-            modelBuilder.Entity<SupplierDetails>()
-            .HasMany(s => s.Drugs)
-            .WithOne(d => d.Supplier)
-            .HasForeignKey(d => d.SupplierId);
+            modelBuilder.Entity<SalesReport>()
+            .HasOne(s => s.Drug)
+            .WithMany() // Adjust according to your model relationships
+            .HasForeignKey(s => s.DrugId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<DrugDetails>()
-            .HasOne(d => d.Supplier)
-            .WithMany(s => s.Drugs)
-            .HasForeignKey(d => d.SupplierId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // Configure one-to-many relationship (one supplier can have many drugs)
+            // modelBuilder.Entity<SupplierDetails>()
+            // .HasMany(s => s.Drugs)
+            // .WithOne(d => d.Supplier)
+            // .HasForeignKey(d => d.SupplierId);
+
+            // modelBuilder.Entity<DrugDetails>()
+            // .HasOne(d => d.Supplier)
+            // .WithMany(s => s.Drugs)
+            // .HasForeignKey(d => d.SupplierId)
+            // .OnDelete(DeleteBehavior.Cascade);
             
         // // Configure one-to-one relationship between User and Cart
         //     modelBuilder.Entity<UserDetails>()

@@ -30,147 +30,207 @@ namespace Demo.Repository;
             $"<tr><td>{item.Drug.DrugName}</td><td>{item.Quantity}</td><td>{item.Price:C}</td><td>{item.Price*item.Quantity:C}</td></tr>"
         ));
 
-        var emailBody = $@"
-            <html>
-            <body>
-                <h2>Order Confirmation</h2>
-                <p>Dear Customer,</p>
-                <p>Your order has been placed successfully!</p>
-                <p><strong>Order ID:</strong> {order.OrderId}</p>
-                <p><strong>Order Date:</strong> {order.OrderDate:yyyy-MM-dd HH:mm:ss}</p>
-                <p><strong>Status:</strong> {order.OrderStatus}</p>
-                <h3>Order Items:</h3>
-                <table border='1'>
-                    <tr>
-                        <th>Drug</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                    </tr>
-                    {orderItemsHtml}
-                </table>
-                <p>Thank you for shopping with us! We will notify you once your order is verified.</p>
-                <p>Best regards,<br/>Pharmacy system</p>
-            </body>
-            </html>";
+      var emailBody = $@"
+        <html>
+        <body>
+            <h2>Order Confirmation</h2>
+            <p>Dear Customer,</p>
+            <p>Your order has been placed successfully! Your order is currently awaiting approval.</p>
+            <p><strong>Order ID:</strong> {order.OrderId}</p>
+            <p><strong>Order Date:</strong> {order.OrderDate:yyyy-MM-dd HH:mm:ss}</p>
+            <p><strong>Status:</strong> Awaiting Approval</p>
+            
+            <h3>Order Items:</h3>
+            <table border='1'>
+                <tr>
+                    <th>Drug</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+                {orderItemsHtml}
+            </table>
+            <p>We will notify you once your order is approved and ready for shipping.</p>
+            <p>Best regards,<br/>Pharmacy system</p>
+        </body>
+        </html>";
 
         return emailBody;
     } 
     
-    public async Task<string> PlaceOrder(ClaimsIdentity user)
+
+    public async Task<string> PlaceOrder(int userId, PlaceOrderDto placeOrderDto)
     {
-            var userId = int.Parse(user.FindFirst("UserId")?.Value);
+        var cart = await context.DrugsCarts
+                    .Include(c => c.CartItems)  // Include related CartItems
+                    .ThenInclude(ci => ci.Drug) // Include the related Drugs (DrugDetails)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);  // Get the user's cart
 
-            // // Retrieve the user's cart
-            // var cart = await context.DrugsCarts
-            //     .Include(c => c.CartItems)  // Include the related CartItems
-            //     .ThenInclude(ci => ci.Drug) // Include the related Drugs
-            //     .FirstOrDefaultAsync(c => c.UserId == userId);  // Get the user's cart
-
-            var cart = await context.DrugsCarts
-                        .Include(c => c.CartItems)  // Include related CartItems
-                        .ThenInclude(ci => ci.Drug) // Include the related Drugs (DrugDetails)
-                        .FirstOrDefaultAsync(c => c.UserId == userId);  // Get the user's cart
-
-            if (cart == null || cart.CartItems.Count == 0)
-            {
-                throw new InvalidOperationException("Your cart is empty.");
-            }
-
-            // Create a new OrderDetails object
-            var order = new OrderDetails
-            {
-                UserId = userId,
-                OrderDate = DateTime.UtcNow,
-                OrderStatus = "Pending", // Initial status can be 'Pending'
-                OrderQuantity = cart.CartItems.Sum(ci => ci.Quantity)
-                 // Total quantity of drugs in the order
-            };
-
-            // Add the order to the database first to generate the OrderId
-            await context.OrderDetails.AddAsync(order);
-            await context.SaveChangesAsync();  // Save OrderDetails to get the OrderId
-
-           
-            // Create a list to store the OrderItems
-            var orderItems = new List<OrderItem>();
-
-            foreach (var cartItem in cart.CartItems)
-            {
-                var drug = cartItem.Drug;
-                if (drug == null)
-                {
-                    throw new KeyNotFoundException($"Drug with ID {cartItem.DrugId} not found.");
-                }
-                var orderItem = new OrderItem
-                {
-                    OrderId = order.OrderId,  // Now that OrderId is generated, assign it to the OrderItem
-                    DrugId = cartItem.DrugId,
-                    Quantity = cartItem.Quantity,
-                    Price = cartItem.Price // Save the price at the time of the order
-                };
-
-                orderItems.Add(orderItem);
-
-                // Decrease the stock based on the quantity ordered (optional)
-                // drug.Quantity -= cartItem.Quantity;
-            }
-
-            // Add the order items to the database
-            await context.OrderItems.AddRangeAsync(orderItems);
-
-            // Now, save the changes to persist the OrderItems in the database
-            await context.SaveChangesAsync();
-
-            // Now, delete the cart items since they have been placed into the order
-            context.CartItems.RemoveRange(cart.CartItems);
-            await context.SaveChangesAsync();
-
-            // Optionally, delete the Cart itself, if you no longer need it
-            context.DrugsCarts.Remove(cart);
-            await context.SaveChangesAsync();
-
-            var emailBody = GenerateOrderConfirmationEmail(order, orderItems);
-            var userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                throw new InvalidOperationException("User email not found.");
-            }
-            // Create the MailRequestDTO object
-            var mailRequest = new MailRequestDTO
-            {
-                ToEmail = userEmail,  // The recipient's email address
-                Subject = "Order Confirmation",  // The subject of the email
-                Body = emailBody  // The body content of the email (HTML)
-            };
-             mailService.SendEmail(mailRequest);
-
-            return "Order placed Successfully";  // Return the placed order
+        if (cart == null || cart.CartItems.Count == 0)
+        {
+            throw new InvalidOperationException("Your cart is empty.");
         }
 
-        public async Task<List<OrderWithDrugsDto>> GetAllOrdersWithDrugs()
+        
+        var orderItems = new List<OrderItem>();
+        decimal totalAmountPaid = 0;
+
+        
+        foreach (var cartItem in cart.CartItems)
         {
-
-            try
+            var drug = cartItem.Drug;
+            if (drug == null)
             {
-                var orders = await context.OrderDetails
-                    .Include(o => o.OrderItems)  // Include related OrderItems
-                    .ThenInclude(oi => oi.Drug)  // Include the Drug details in the OrderItem
-                    .Where(o => o.OrderStatus != "Verified")  // Show only unverified orders
-                    .ToListAsync();
+                throw new KeyNotFoundException($"Drug with ID {cartItem.DrugId} not found.");
+            }
 
-                var orderDtos = orders.Select(o => new OrderWithDrugsDto
+            var orderItem = new OrderItem
+            {
+                DrugId = cartItem.DrugId,
+                Quantity = cartItem.Quantity,
+                Price = cartItem.Price
+            };
+
+            totalAmountPaid += orderItem.Quantity * orderItem.Price;  // Calculate total amount here
+            orderItems.Add(orderItem);
+        }
+
+        
+        var order = new OrderDetails
+        {
+            UserId = userId,
+            OrderDate = DateTime.UtcNow,
+            OrderStatus = "Complete",
+            ShippingAddress = placeOrderDto.ShippingAddress,
+            OrderQuantity = cart.CartItems.Sum(ci => ci.Quantity),
+            DeliveryDate = DateTime.UtcNow.AddDays(2)
+        };
+
+        
+        await context.OrderDetails.AddAsync(order);
+        await context.SaveChangesAsync(); 
+
+       
+        foreach (var orderItem in orderItems)
+        {
+            orderItem.OrderId = order.OrderId;  
+        }
+
+        
+        await context.OrderItems.AddRangeAsync(orderItems);
+        await context.SaveChangesAsync();
+
+        
+        var validTransactionTypes = new List<string> { "UPI", "CreditCard", "DebitCard" };
+
+        if (!validTransactionTypes.Contains(placeOrderDto.TransactionType, StringComparer.OrdinalIgnoreCase))
+        {
+            return "No other transaction type available";
+        }
+
+        
+        var transaction = new TransactionDetails
+        {
+            OrderId = order.OrderId,
+            TransactionType = placeOrderDto.TransactionType,
+            TransactionStatus = "Paid",
+            AmountPaid = totalAmountPaid,  
+            TransactionDate = DateTime.UtcNow
+        };
+
+        await context.TransactionDetails.AddAsync(transaction);
+        await context.SaveChangesAsync();
+
+       
+        context.CartItems.RemoveRange(cart.CartItems);
+        await context.SaveChangesAsync();
+
+        context.DrugsCarts.Remove(cart);
+        await context.SaveChangesAsync();
+
+        
+        var emailBody = GenerateOrderConfirmationEmail(order, orderItems);
+        var user = await context.UserDetails.FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+        {
+            return "User not found.";
+        }
+
+        var userEmail = user.EmailId;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            throw new InvalidOperationException("User email not found.");
+        }
+
+        var mailRequest = new MailRequestDTO
+        {
+            ToEmail = userEmail,
+            Subject = "Order Confirmation",
+            Body = emailBody
+        };
+        mailService.SendEmail(mailRequest);
+
+        // Update drug quantities
+        foreach (var orderItem in order.OrderItems)
+        {
+            var drug = orderItem.Drug;
+            drug.Quantity -= orderItem.Quantity;
+        }
+        await context.SaveChangesAsync();
+
+        return "Order placed successfully";
+    }
+    public async Task<List<OrderCancelDto>> GetUserOrders(int userId)//user can see their orders 
+    {
+            var orders = await context.OrderDetails
+                .Where(o => o.UserId == userId)  // Filter by UserId
+                .Include(o => o.OrderItems)      // Include order items
+                .ThenInclude(oi => oi.Drug)     // Include drugs associated with order items
+                .Select(o => new OrderCancelDto        // Select relevant order details
                 {
                     OrderId = o.OrderId,
-                    UserId = o.UserId,
                     OrderDate = o.OrderDate,
                     OrderStatus = o.OrderStatus,
-                    OrderQuantity = o.OrderQuantity,
-                    OrderItems = o.OrderItems.Select(oi => new OrderItemDto
+                    DeliveryDate = o.DeliveryDate,
+                    TransactionStatus = context.TransactionDetails
+                        .Where(t => t.OrderId == o.OrderId)
+                        .Select(t => t.TransactionStatus)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return orders;
+        }
+
+    public async Task<List<AllOrderDetails>> GetAllOrdersWithDrugs()
+    {
+            try
+            {
+                 var orders = await context.OrderDetails
+                            .Include(o => o.OrderItems)  
+                            .ThenInclude(oi => oi.Drug)  
+                            .Join(context.TransactionDetails, 
+                                order => order.OrderId,  
+                                transaction => transaction.OrderId,
+                                (order, transaction) => new { order, transaction })  
+                            .Where(o => o.order.OrderStatus != "Verified")  
+                            .ToListAsync();
+
+
+                var orderDtos = orders.Select(o => new AllOrderDetails
+                {
+                    OrderId = o.order.OrderId,
+                    UserId = o.order.UserId,
+                    OrderDate = o.order.OrderDate,
+                    OrderStatus = o.order.OrderStatus,
+                    OrderQuantity = o.order.OrderQuantity,
+                    TransactionStatus = o.transaction.TransactionStatus,  
+                    OrderItems = o.order.OrderItems.Select(oi => new OrderItemDto
                     {
-                        OrderItemId=oi.OrderItemId,
+                        OrderItemId = oi.OrderItemId,
                         DrugId = oi.DrugId,
-                        DrugName = oi.Drug.DrugName,  // Assuming Drug has a Name property
+                        DrugName = oi.Drug.DrugName,  
                         Quantity = oi.Quantity,
                         TotalItemPrice = oi.Quantity * oi.Price,
                         Price = oi.Price
@@ -183,114 +243,165 @@ namespace Demo.Repository;
             {
                  throw new Exception($"Error fetching orders: {ex.Message}");
             }
-        }
-public async Task<string> VerifyOrder(int orderId)
-{
-    // var order = await context.OrderDetails
-    // .Include(o => o.User)  // Explicitly include the User in the query
-    // .FirstOrDefaultAsync(o => o.OrderId == orderId);
-
-    // Retrieve the order details along with the order items
-        var order = await context.OrderDetails
-        .Include(o => o.User)  // Load related User
-        .Include(o => o.OrderItems)  // Load related OrderItems
-        .ThenInclude(oi => oi.Drug)  // Load related DrugDetails for each OrderItem
-        .FirstOrDefaultAsync(o => o.OrderId == orderId);
-    // Check if the order is null (if the order doesn't exist in the database)
-    if (order == null)
+    }
+    public async Task<string> ApproveOrder(int orderId)
     {
-        throw new InvalidOperationException("Order not found.");
+        try
+        {
+            var order = await context.OrderDetails
+                .Include(o => o.OrderItems)  
+                .ThenInclude(oi => oi.Drug)  
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                return "Order not found!";
+            }
+
+            bool isOrderApproved = true;  
+           
+
+            foreach (var orderItem in order.OrderItems)
+            {
+                
+                var drug = await context.DrugDetails.FirstOrDefaultAsync(d => d.DrugId == orderItem.DrugId);
+
+                if (drug == null)
+                {
+                    isOrderApproved = false;
+                    continue; 
+                }
+
+                if (orderItem.Quantity > drug.Quantity)
+                {
+                   
+                    isOrderApproved = false;
+                }
+            }
+            if (isOrderApproved)
+            {
+                order.OrderStatus = "Approved";  
+            }
+            else
+            {
+                order.OrderStatus = "Rejected";  
+            }
+
+            await context.SaveChangesAsync();
+
+            if (isOrderApproved)
+            {
+               var user = await context.UserDetails.FirstOrDefaultAsync(u => u.UserId == order.UserId);
+
+                if (user == null)
+                {
+                    return "User not found.";
+                }
+
+                var emailBody = $@"
+                    <p>Dear {user.UserName},</p>
+                    <p>Your order with Order ID {order.OrderId} has been approved successfully.</p>
+                    <p><strong>Shipping Address:</strong> {order.ShippingAddress}</p>
+                    <p><strong>Delivery Date:</strong> {order.DeliveryDate:yyyy-MM-dd}</p>
+                    <p>Thank you for shopping with us!</p>
+                    <p>Best regards,<br/>Pharmacy System</p>";
+
+                var mailRequest = new MailRequestDTO
+                {
+                    ToEmail = user.EmailId,
+                    Subject = "Order Approved - Shipping Details",
+                    Body = emailBody
+                };
+
+                mailService.SendEmail(mailRequest);
+
+                return "Order has been approved successfully and email sent to the user.";
+            }
+            else
+            {
+                return $"Order has been rejected";
+            }
+        }
+        catch (Exception ex)
+        {
+            
+            return $"An error occurred while processing the order: {ex.Message}";
+        }
     }
 
-    // Check if the User is null (ensure the order is associated with a valid user)
-    if (order.User == null)
+    public async Task<string> CancelCompletedOrder(int orderId, int userid)
     {
-        throw new InvalidOperationException("Order does not have an associated user.");
+            //var userId =int.Parse(user.FindFirst("UserId")?.Value);
+
+            var userDetails=await context.UserDetails.Where(u=>u.UserId==userid).FirstOrDefaultAsync();
+            var username=userDetails.UserName;
+            
+            if(userid==null)
+            {
+                throw new UnauthorizedAccessException("Invalid User ID.");
+            }
+
+        
+            var order = await context.OrderDetails
+                .Where(o => o.OrderId == orderId) 
+                .FirstOrDefaultAsync();
+            if (order == null)
+            {
+                return "Order not found";
+            }
+
+            var orderid=order.OrderId;
+            
+            var orderItems = await context.OrderItems
+                .Where(oi => oi.OrderId == order.OrderId)
+                .ToListAsync();
+
+            
+            foreach (var orderItem in orderItems)
+            {
+                var drug = await context.DrugDetails.FindAsync(orderItem.DrugId);
+                if (drug != null)
+                {
+                    drug.Quantity += orderItem.Quantity;
+                }
+            }
+
+            
+            order.OrderStatus = "Cancelled";  
+
+            var transaction = await context.TransactionDetails
+                .Where(t => t.OrderId == order.OrderId)
+                .FirstOrDefaultAsync();
+
+            if (transaction == null)
+            {
+                return "Transaction details not found.";
+            }
+
+        
+            transaction.TransactionStatus = "Refund in process";
+            
+            await context.SaveChangesAsync();
+
+            var emailBody = $@"
+                <p>Dear {username},</p>
+                <p>Your order with Order ID {orderid} has been successfully cancelled as per your request.</p>
+                <p>Your payment for this order will be refunded to your original payment method.</p>
+                <p>We apologize for the inconvenience, and we hope to serve you better in the future.</p>
+                <p>If you have any questions or concerns, feel free to contact our support team.</p>
+                <p>Thank you for shopping with us!</p>";
+
+
+            var mailRequest = new MailRequestDTO
+            {
+                ToEmail = order.User.EmailId, 
+                Subject = "Your Order Has Been Cancelled",
+                Body = emailBody
+            };
+
+            
+            mailService.SendEmail(mailRequest);
+
+            return $"Order {order.OrderId} has been successfully cancelled, stock updated, and email sent to the user.";
     }
-
-    bool isStockAvailable = true;
-    List<OrderItem> outOfStockItems = new List<OrderItem>();
-
-    // Check stock availability for each item in the order
-    foreach (var orderItem in order.OrderItems)
-    {
-        // Check if the Drug is null (ensure the order item has a valid drug associated)
-        if (orderItem.Drug == null)
-        {
-            throw new InvalidOperationException($"Drug not found for OrderItem ID {orderItem.OrderItemId}");
-        }
-
-        var drug = orderItem.Drug;
-
-        // If the drug quantity in stock is less than the quantity ordered, mark it as out of stock
-        if (drug.Quantity < orderItem.Quantity)
-        {
-            isStockAvailable = false;
-            outOfStockItems.Add(orderItem);
-        }
-    }
-
-    // If stock is available, verify the order and update the status
-    if (isStockAvailable)
-    {
-        order.OrderStatus = "Verified";  // Mark the order as verified
-
-        // Update stock (deduct the ordered quantity)
-        foreach (var orderItem in order.OrderItems)
-        {
-            var drug = orderItem.Drug;
-            drug.Quantity -= orderItem.Quantity;
-        }
-
-        await context.SaveChangesAsync();  // Save the updates to the database
-
-        // Send email to the user notifying them about the order verification
-        var emailBody = $"<p>Your order with Order ID {order.OrderId} has been successfully verified and is now in processing.</p>";
-        var userEmail = order.User.EmailId;
-
-        // Check if user email is null
-        if (string.IsNullOrEmpty(userEmail))
-        {
-            throw new InvalidOperationException("User email is missing.");
-        }
-
-        var mailRequest = new MailRequestDTO
-        {
-            ToEmail = userEmail,
-            Subject = "Order Verified",
-            Body = emailBody
-        };
-         mailService.SendEmail(mailRequest);
-
-        return "Order has been verified successfully.";
-    }
-    else
-    {
-        // If stock is not available, mark the order as cancelled and notify the user
-        order.OrderStatus = "Cancelled";  // Mark the order as cancelled
-
-        await context.SaveChangesAsync();  // Save the updates to the database
-
-        // Send email to the user notifying them about the cancellation
-        var emailBody = $"<p>Unfortunately, your order with Order ID {order.OrderId} has been cancelled due to insufficient stock of some items. We apologize for the inconvenience.</p>";
-        var userEmail = order.User.EmailId;
-
-        if (string.IsNullOrEmpty(userEmail))
-        {
-            throw new InvalidOperationException("User email is missing.");
-        }
-
-        var mailRequest = new MailRequestDTO
-        {
-            ToEmail = userEmail,
-            Subject = "Order Cancelled",
-            Body = emailBody
-        };
-         mailService.SendEmail(mailRequest);
-
-        return "Order has been cancelled due to insufficient stock.";
-    }
-}
-
-
 }

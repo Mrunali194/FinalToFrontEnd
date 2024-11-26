@@ -75,6 +75,9 @@ namespace Demo.Repository
             // Step 2: Add or update the CartItem for the drug
             await AddOrUpdateCartItem(cart, addToCartDto, drug);
 
+            cart.Quantity += addToCartDto.Quantity;
+            cart.TotalPrice += drug.Price * addToCartDto.Quantity;
+
             // Save all changes (CartItems, Cart, and Drugs)
             await context.SaveChangesAsync();
 

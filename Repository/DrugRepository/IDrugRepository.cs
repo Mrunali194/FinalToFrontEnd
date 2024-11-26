@@ -4,7 +4,7 @@ namespace Demo.Repository;
 
 public interface IDrugRepository
 {
-    Task<DrugDetailsDto> AddDrugDetails(DrugDetailsDto drugDto);
+    Task<string> AddDrugDetails(DrugDetailsDto drugDto);
     Task DeleteDrugsAsync(List<DrugDetails> drugs);
     Task<List<DrugDetails>> GetDrugsToUpdateAsync();
     

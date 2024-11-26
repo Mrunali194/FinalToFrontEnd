@@ -70,7 +70,6 @@ public class SupplierController : ControllerBase
         
         var suppliers = await supplierDetails.GetAllSuppliers();
 
-    
         var filteredSuppliers =  suppliers.Where(s => s.SupplierName.ToLower().StartsWith(supplierName.ToLower())) 
                                                 .ToList();
 
@@ -89,14 +88,11 @@ public class SupplierController : ControllerBase
     {
         try
         {
-            
             var supplier = await supplierDetails.GetSupplierByIdAsync(supplierId);
             if (supplier == null)
             {
                 return NotFound(new { message = "Supplier not found." });
             }
-
-           
             await supplierDetails.DeleteSupplierAsync(supplier);
 
             return Ok(new { message = "Supplier deleted successfully." });

@@ -22,11 +22,24 @@ public class OrderController : ControllerBase
 
     [HttpPost("place-order")]
     [Authorize(Roles ="Doctor")]
-    public async Task<IActionResult> PlaceOrder()
+    public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderDto placeOrderDto)
     {
         try
         {
-            var result = await orderService.PlaceOrder(User.Identity as ClaimsIdentity);
+            var idString = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
+            if (string.IsNullOrEmpty(idString))
+            {
+                return BadRequest("UserId claim is missing.");
+            }
+
+            // Attempt to parse the UserId claim to an integer
+            if (!int.TryParse(idString, out int id))
+            {
+                return BadRequest("Invalid UserId.");
+            };
+            
+            var result = await orderService.PlaceOrder(id,placeOrderDto);
             return Ok(result); // Return a success message
         }
         catch (InvalidOperationException ex)
@@ -60,21 +73,65 @@ public class OrderController : ControllerBase
             throw new Exception("Internal server error: {ex.Message}");
         }
     }
-
-    [Authorize(Roles = "Admin")]  // Restrict to admin users
-    [HttpPut("verify-order/{orderId}")]
-    public async Task<IActionResult> VerifyOrder(int orderId)
+    [HttpGet("orders")]
+    [Authorize(Roles ="Doctor")]
+    public async Task<IActionResult> GetUserOrders()
     {
         try
         {
-            var result = await orderService.VerifyOrder(orderId);
-            return Ok(result);  // Return the result of the verification
+            var userId =int.Parse(User.FindFirst("UserId")?.Value);
+
+            var orders = await orderService.GetUserOrders(userId);
+
+            if (orders == null || orders.Count == 0)
+            {
+                return NotFound("No orders found for the user.");
+            }
+
+            return Ok(orders);
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest($"Error: {ex.Message}");
         }
     }
+    [HttpPost("approve-order/{orderId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ApproveOrder(int orderId)
+    {
+        
+        var result = await orderService.ApproveOrder(orderId);
+
+        if (result.Contains("successfully"))
+        {
+            return Ok(result);  
+        }
+        else
+        {
+            return BadRequest(result);  
+        }
+    }
+
+    [HttpPost("cancel")]
+    [Authorize(Roles ="Doctor")]
+    public async Task<IActionResult> CancelCompletedOrder(int OrderId)
+    {
+            try
+            {
+                var userid = int.Parse(User.FindFirst("UserId")?.Value);  
+                var result = await orderService.CancelCompletedOrder(OrderId,userid);
+
+                return Ok(new { message = result });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
 }
 
 

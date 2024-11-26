@@ -19,27 +19,30 @@ public class DrugController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AddDrug([FromBody] DrugDetailsDto drugDto)
     {
-        
-        if (drugDto.ExpiryDate <= DateTime.Now)
-        {
-            return BadRequest("Expiry date must be in the future.");
-        }
-
         if (drugDto == null)
         {
             return BadRequest("Drug details are required.");
         }
+        else if(drugDto.Quantity<=0)
+        {
+            return BadRequest("Quantity must be greater than 0");
+        }
+        else if(drugDto.Price<=0)
+        {
+             return BadRequest("Price must be greater than 0");
+        }
+        else if (drugDto.ExpiryDate <= DateTime.Now)
+        {
+            return BadRequest("Expiry date must be in the future.");
+        }
+        else
         try
         {
-            
-            await drugDetails.AddDrugDetails(drugDto);
-
-            
-            return Ok(new { Message = "Drug added successfully." });
+            var result=await drugDetails.AddDrugDetails(drugDto);
+            return Ok(new { Message = result});
         }
         catch (Exception ex)
         {
-            
             return BadRequest(new { message = ex.Message });
         }
     }
@@ -67,9 +70,9 @@ public class DrugController : ControllerBase
         }
     }
 
-         [Authorize(Roles = "Doctor,Admin")]
-        [HttpGet("searchByName/{searchDrug}")]
-        public async Task<IActionResult> SearchDrugsByName(string searchDrug)
+    [Authorize(Roles = "Doctor,Admin")]
+    [HttpGet("searchByName/{searchDrug}")]
+    public async Task<IActionResult> SearchDrugsByName(string searchDrug)
         {
             if (string.IsNullOrWhiteSpace(searchDrug))
             {
@@ -99,15 +102,9 @@ public class DrugController : ControllerBase
             {
                 return NotFound(new { message = "Drug not found." });
             }
-           
-            drug.Quantity -= drugDto.Quantity; 
-            if (drug.Quantity < 0)
-            {
-                return BadRequest(new { message = "Insufficient stock." });
-            }
-
             try
             {
+                drug.Quantity+=drugDto.Quantity;
                 await drugDetails.UpdateDrugDetails(drug);
                 return Ok(new { message = "Drug quantity updated successfully." });
             }

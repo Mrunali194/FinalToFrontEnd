@@ -14,7 +14,6 @@ public class UserDetails {
     public string UserType {get; set;}
 
 
-    public ICollection<OrderDetails>? Orders{get;set;}
+    //public List<OrderDetails>? Orders{get;set;}
     
-
 }

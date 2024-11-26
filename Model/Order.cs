@@ -9,10 +9,12 @@ public class OrderDetails {
     public string? OrderStatus {get; set;}
     public int OrderQuantity {get; set;}
 
+    public DateTime? DeliveryDate { get; set; }
+    public string? ShippingAddress { get; set; }  
+
     public UserDetails User{get;set;}
     
-    
-    //public ICollection<CartItem> CartItems { get; set; } 
+
     public ICollection<OrderItem> OrderItems { get; set; }
 
    
