@@ -1,7 +1,9 @@
 using Demo.Database;
+using Demo.Dtos;
 using Demo.Model;
 using Microsoft.EntityFrameworkCore;
 
+namespace Demo.Repository;
 public class SupplierService:ISupplierRepository
 {
      private readonly DatabaseContext context;
@@ -62,6 +64,8 @@ public class SupplierService:ISupplierRepository
             context.SupplierDetails.Remove(supplier);
             await context.SaveChangesAsync();
     }
+
+   
 }
 
 

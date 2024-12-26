@@ -6,27 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Demo.Migrations
 {
     /// <inheritdoc />
-    public partial class applicationschema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Admin",
-                columns: table => new
-                {
-                    AdminId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Username = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Admin", x => x.AdminId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Suppliers",
+                name: "SupplierDetails",
                 columns: table => new
                 {
                     SupplierId = table.Column<int>(type: "int", nullable: false)
@@ -37,11 +23,11 @@ namespace Demo.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Suppliers", x => x.SupplierId);
+                    table.PrimaryKey("PK_SupplierDetails", x => x.SupplierId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "UserDetails",
                 columns: table => new
                 {
                     UserId = table.Column<int>(type: "int", nullable: false)
@@ -54,11 +40,11 @@ namespace Demo.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.UserId);
+                    table.PrimaryKey("PK_UserDetails", x => x.UserId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Drugs",
+                name: "DrugDetails",
                 columns: table => new
                 {
                     DrugId = table.Column<int>(type: "int", nullable: false)
@@ -71,17 +57,16 @@ namespace Demo.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Drugs", x => x.DrugId);
+                    table.PrimaryKey("PK_DrugDetails", x => x.DrugId);
                     table.ForeignKey(
-                        name: "FK_Drugs_Suppliers_SupplierId",
+                        name: "FK_DrugDetails_SupplierDetails_SupplierId",
                         column: x => x.SupplierId,
-                        principalTable: "Suppliers",
-                        principalColumn: "SupplierId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalTable: "SupplierDetails",
+                        principalColumn: "SupplierId");
                 });
 
             migrationBuilder.CreateTable(
-                name: "Carts",
+                name: "DrugsCarts",
                 columns: table => new
                 {
                     CartId = table.Column<int>(type: "int", nullable: false)
@@ -92,17 +77,17 @@ namespace Demo.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Carts", x => x.CartId);
+                    table.PrimaryKey("PK_DrugsCarts", x => x.CartId);
                     table.ForeignKey(
-                        name: "FK_Carts_Users_UserId",
+                        name: "FK_DrugsCarts_UserDetails_UserId",
                         column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "UserDetails",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Orders",
+                name: "OrderDetails",
                 columns: table => new
                 {
                     OrderId = table.Column<int>(type: "int", nullable: false)
@@ -111,22 +96,39 @@ namespace Demo.Migrations
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     OrderStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OrderQuantity = table.Column<int>(type: "int", nullable: false),
-                    DrugDetailsDrugId = table.Column<int>(type: "int", nullable: true)
+                    DeliveryDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ShippingAddress = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Orders", x => x.OrderId);
+                    table.PrimaryKey("PK_OrderDetails", x => x.OrderId);
                     table.ForeignKey(
-                        name: "FK_Orders_Drugs_DrugDetailsDrugId",
-                        column: x => x.DrugDetailsDrugId,
-                        principalTable: "Drugs",
-                        principalColumn: "DrugId");
-                    table.ForeignKey(
-                        name: "FK_Orders_Users_UserId",
+                        name: "FK_OrderDetails_UserDetails_UserId",
                         column: x => x.UserId,
-                        principalTable: "Users",
+                        principalTable: "UserDetails",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SalesReports",
+                columns: table => new
+                {
+                    ReportId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DrugId = table.Column<int>(type: "int", nullable: false),
+                    AmountSold = table.Column<int>(type: "int", nullable: false),
+                    SaleAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SalesReports", x => x.ReportId);
+                    table.ForeignKey(
+                        name: "FK_SalesReports_DrugDetails_DrugId",
+                        column: x => x.DrugId,
+                        principalTable: "DrugDetails",
+                        principalColumn: "DrugId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -138,54 +140,55 @@ namespace Demo.Migrations
                     CartId = table.Column<int>(type: "int", nullable: false),
                     DrugId = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    OrderId = table.Column<int>(type: "int", nullable: true)
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CartItems", x => x.CartItemId);
                     table.ForeignKey(
-                        name: "FK_CartItems_Carts_CartId",
-                        column: x => x.CartId,
-                        principalTable: "Carts",
-                        principalColumn: "CartId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Drugs_DrugId",
+                        name: "FK_CartItems_DrugDetails_DrugId",
                         column: x => x.DrugId,
-                        principalTable: "Drugs",
+                        principalTable: "DrugDetails",
                         principalColumn: "DrugId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_CartItems_Orders_OrderId",
-                        column: x => x.OrderId,
-                        principalTable: "Orders",
-                        principalColumn: "OrderId");
+                        name: "FK_CartItems_DrugsCarts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "DrugsCarts",
+                        principalColumn: "CartId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "SalesReports",
+                name: "OrderItems",
                 columns: table => new
                 {
-                    ReportId = table.Column<int>(type: "int", nullable: false)
+                    OrderItemId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<int>(type: "int", nullable: false),
-                    AmountSold = table.Column<int>(type: "int", nullable: false),
-                    SaleAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    DrugId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SalesReports", x => x.ReportId);
+                    table.PrimaryKey("PK_OrderItems", x => x.OrderItemId);
                     table.ForeignKey(
-                        name: "FK_SalesReports_Orders_OrderId",
+                        name: "FK_OrderItems_DrugDetails_DrugId",
+                        column: x => x.DrugId,
+                        principalTable: "DrugDetails",
+                        principalColumn: "DrugId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_OrderDetails_OrderId",
                         column: x => x.OrderId,
-                        principalTable: "Orders",
+                        principalTable: "OrderDetails",
                         principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Transactions",
+                name: "TransactionDetails",
                 columns: table => new
                 {
                     TransactionId = table.Column<int>(type: "int", nullable: false)
@@ -193,16 +196,16 @@ namespace Demo.Migrations
                     TransactionType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TransactionStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AmountPaid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TransactionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TransactionDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     OrderId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Transactions", x => x.TransactionId);
+                    table.PrimaryKey("PK_TransactionDetails", x => x.TransactionId);
                     table.ForeignKey(
-                        name: "FK_Transactions_Orders_OrderId",
+                        name: "FK_TransactionDetails_OrderDetails_OrderId",
                         column: x => x.OrderId,
-                        principalTable: "Orders",
+                        principalTable: "OrderDetails",
                         principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -218,38 +221,38 @@ namespace Demo.Migrations
                 column: "DrugId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_OrderId",
-                table: "CartItems",
-                column: "OrderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Carts_UserId",
-                table: "Carts",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Drugs_SupplierId",
-                table: "Drugs",
+                name: "IX_DrugDetails_SupplierId",
+                table: "DrugDetails",
                 column: "SupplierId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_DrugDetailsDrugId",
-                table: "Orders",
-                column: "DrugDetailsDrugId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Orders_UserId",
-                table: "Orders",
+                name: "IX_DrugsCarts_UserId",
+                table: "DrugsCarts",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SalesReports_OrderId",
-                table: "SalesReports",
+                name: "IX_OrderDetails_UserId",
+                table: "OrderDetails",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_DrugId",
+                table: "OrderItems",
+                column: "DrugId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_OrderId",
+                table: "OrderItems",
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transactions_OrderId",
-                table: "Transactions",
+                name: "IX_SalesReports_DrugId",
+                table: "SalesReports",
+                column: "DrugId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionDetails_OrderId",
+                table: "TransactionDetails",
                 column: "OrderId");
         }
 
@@ -257,31 +260,31 @@ namespace Demo.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Admin");
+                name: "CartItems");
 
             migrationBuilder.DropTable(
-                name: "CartItems");
+                name: "OrderItems");
 
             migrationBuilder.DropTable(
                 name: "SalesReports");
 
             migrationBuilder.DropTable(
-                name: "Transactions");
+                name: "TransactionDetails");
 
             migrationBuilder.DropTable(
-                name: "Carts");
+                name: "DrugsCarts");
 
             migrationBuilder.DropTable(
-                name: "Orders");
+                name: "DrugDetails");
 
             migrationBuilder.DropTable(
-                name: "Drugs");
+                name: "OrderDetails");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "SupplierDetails");
 
             migrationBuilder.DropTable(
-                name: "Suppliers");
+                name: "UserDetails");
         }
     }
 }

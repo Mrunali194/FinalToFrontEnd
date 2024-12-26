@@ -48,15 +48,15 @@ public class DatabaseContext : DbContext {
         //     .OnDelete(DeleteBehavior.Cascade);  // Cascade delete (optional)
     
 
-            // Optionally, set table names if needed (for custom naming conventions)
-            modelBuilder.Entity<UserDetails>().ToTable("Users");
-            modelBuilder.Entity<DrugsCart>().ToTable("Carts");
-            modelBuilder.Entity<SalesReport>().ToTable("SalesReports");
-            modelBuilder.Entity<DrugDetails>().ToTable("Drugs");
-            modelBuilder.Entity<OrderDetails>().ToTable("Orders");
-            modelBuilder.Entity<SupplierDetails>().ToTable("Suppliers");
-            modelBuilder.Entity<CartItem>().ToTable("CartItems");
-            modelBuilder.Entity<TransactionDetails>().ToTable("Transactions");
+            // // Optionally, set table names if needed (for custom naming conventions)
+            // modelBuilder.Entity<UserDetails>().ToTable("Users");
+            // modelBuilder.Entity<DrugsCart>().ToTable("Carts");
+            // modelBuilder.Entity<SalesReport>().ToTable("SalesReports");
+            // modelBuilder.Entity<DrugDetails>().ToTable("Drugs");
+            // modelBuilder.Entity<OrderDetails>().ToTable("Orders");
+            // modelBuilder.Entity<SupplierDetails>().ToTable("Suppliers");
+            // modelBuilder.Entity<CartItem>().ToTable("CartItems");
+            // modelBuilder.Entity<TransactionDetails>().ToTable("Transactions");
 
 
       }

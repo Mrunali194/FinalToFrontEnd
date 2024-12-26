@@ -1,3 +1,4 @@
+namespace Demo.Dtos;
 public class UpdateCartItemDto
 {
     public int UserId { get; set; }

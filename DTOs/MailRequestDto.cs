@@ -1,4 +1,4 @@
-using Demo.Dtos;
+namespace Demo.Dtos;
 public class MailRequestDTO
 {
     public string? ToEmail { get; set; }

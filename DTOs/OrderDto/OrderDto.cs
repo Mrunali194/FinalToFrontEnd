@@ -1,3 +1,4 @@
+namespace Demo.Dtos;
 public class AllOrderDetails
 {
     public int OrderId { get; set; }  

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Demo.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20241122150914_update13")]
-    partial class update13
+    [Migration("20241202160330_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,7 +51,7 @@ namespace Demo.Migrations
 
                     b.HasIndex("DrugId");
 
-                    b.ToTable("CartItems", (string)null);
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("Demo.Model.DrugDetails", b =>
@@ -74,9 +74,14 @@ namespace Demo.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("int");
+
                     b.HasKey("DrugId");
 
-                    b.ToTable("Drugs", (string)null);
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("DrugDetails");
                 });
 
             modelBuilder.Entity("Demo.Model.DrugsCart", b =>
@@ -100,7 +105,7 @@ namespace Demo.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts", (string)null);
+                    b.ToTable("DrugsCarts");
                 });
 
             modelBuilder.Entity("Demo.Model.OrderDetails", b =>
@@ -124,7 +129,6 @@ namespace Demo.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShippingAddress")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -134,7 +138,7 @@ namespace Demo.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("Demo.Model.SalesReport", b =>
@@ -158,7 +162,7 @@ namespace Demo.Migrations
 
                     b.HasIndex("DrugId");
 
-                    b.ToTable("SalesReports", (string)null);
+                    b.ToTable("SalesReports");
                 });
 
             modelBuilder.Entity("Demo.Model.SupplierDetails", b =>
@@ -183,7 +187,7 @@ namespace Demo.Migrations
 
                     b.HasKey("SupplierId");
 
-                    b.ToTable("Suppliers", (string)null);
+                    b.ToTable("SupplierDetails");
                 });
 
             modelBuilder.Entity("Demo.Model.TransactionDetails", b =>
@@ -213,7 +217,7 @@ namespace Demo.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("TransactionDetails");
                 });
 
             modelBuilder.Entity("Demo.Model.UserDetails", b =>
@@ -243,7 +247,7 @@ namespace Demo.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("UserDetails");
                 });
 
             modelBuilder.Entity("OrderItem", b =>
@@ -294,6 +298,15 @@ namespace Demo.Migrations
                     b.Navigation("Drug");
                 });
 
+            modelBuilder.Entity("Demo.Model.DrugDetails", b =>
+                {
+                    b.HasOne("Demo.Model.SupplierDetails", "Supplier")
+                        .WithMany("Drugs")
+                        .HasForeignKey("SupplierId");
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("Demo.Model.DrugsCart", b =>
                 {
                     b.HasOne("Demo.Model.UserDetails", "User")
@@ -321,7 +334,7 @@ namespace Demo.Migrations
                     b.HasOne("Demo.Model.DrugDetails", "Drug")
                         .WithMany()
                         .HasForeignKey("DrugId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Drug");
@@ -370,6 +383,11 @@ namespace Demo.Migrations
             modelBuilder.Entity("Demo.Model.OrderDetails", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("Demo.Model.SupplierDetails", b =>
+                {
+                    b.Navigation("Drugs");
                 });
 #pragma warning restore 612, 618
         }

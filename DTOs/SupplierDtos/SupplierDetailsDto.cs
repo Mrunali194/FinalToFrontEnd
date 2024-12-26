@@ -1,3 +1,4 @@
+namespace Demo.Dtos;
 public class SupplierDetailsDto
 {
     public string? SupplierEmail {get; set;}

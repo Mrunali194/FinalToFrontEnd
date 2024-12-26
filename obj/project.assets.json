@@ -5276,19 +5276,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\mvijayha\\.nuget\\packages\\": {}
+    "C:\\Users\\Win 11\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mvijayha\\Desktop\\Sample\\Demo\\Demo.csproj",
+      "projectUniqueName": "C:\\Users\\Win 11\\Desktop\\Pharmacy_Management_System\\Demo.csproj",
       "projectName": "Demo",
-      "projectPath": "C:\\Users\\mvijayha\\Desktop\\Sample\\Demo\\Demo.csproj",
-      "packagesPath": "C:\\Users\\mvijayha\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mvijayha\\Desktop\\Sample\\Demo\\obj\\",
+      "projectPath": "C:\\Users\\Win 11\\Desktop\\Pharmacy_Management_System\\Demo.csproj",
+      "packagesPath": "C:\\Users\\Win 11\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Win 11\\Desktop\\Pharmacy_Management_System\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\mvijayha\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Win 11\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"

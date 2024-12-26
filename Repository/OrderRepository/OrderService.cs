@@ -192,7 +192,6 @@ namespace Demo.Repository;
                     OrderId = o.OrderId,
                     OrderDate = o.OrderDate,
                     OrderStatus = o.OrderStatus,
-                    DeliveryDate = o.DeliveryDate,
                     TransactionStatus = context.TransactionDetails
                         .Where(t => t.OrderId == o.OrderId)
                         .Select(t => t.TransactionStatus)
